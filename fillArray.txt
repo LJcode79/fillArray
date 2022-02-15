@@ -1,0 +1,111 @@
+.data
+
+str: .asciiz "================================================================================"
+programDesc: .asciiz "\nWrite a program that asks for a number between 2 and 11, fill an array with a number of that size, and add all the elements in that array."
+author: .asciiz "\nAuthor: 		Lawrence John \"L.J.\" Balanza"
+creationDate: .asciiz "\nCreation Date:		10/04/2021	"
+space: .asciiz "\n" 
+
+str1: .asciiz "\nEnter a number between 2 and 11: "
+str2: .asciiz "\nError: need a number between 2 and 11. "
+str3: .asciiz "The sum of all the elements in the array is: "
+
+arr1: .word 0,0,0,0,0,0,0,0,0,0
+.text
+main: 
+	li $v0, 4
+	la $a0 , str #================================================================================
+	syscall
+	
+	li $v0, 4
+	la $a0 , programDesc #\nPrint Description
+	syscall
+	
+	li $v0, 4
+	la $a0 , author #\nAuthor: 		Lawrence John \"L.J.\" Balanza
+	syscall
+	
+	li $v0, 4
+	la $a0 , creationDate #\nCreation Date:		10/04/2021	
+	syscall
+	
+	li $v0, 4
+	la $a0 , space #\n
+	syscall
+	
+	li $v0, 4
+	la $a0 , str #================================================================================
+	syscall
+	
+	#Beggining of lab 10
+	
+	li $v0, 4
+	la $a0, str1 #\nEnter a number between 2 and 11:
+	syscall
+	
+input:	li $v0, 5 #get user input, loop if error occurs
+	syscall
+	
+	add $s0, $0, $v0 #puts user input into s0
+	add $s7, $0, $v0 #used to reset counter
+	
+	addi $t0, $0, 2	#set conditional parameters 2<n<11
+	addi $t1, $0, 11
+	
+	sgt $s1, $s0, $t0 #s registers set to 1 if conditions met
+	slt $s2, $s0, $t1
+	
+	add $s3, $s1, $s2 #add conditions together
+	
+	bne $s3, $t0, error #Label points to error if sum of conditions is less than 2
+	la $s4, arr1
+#FillArray method
+	jal fillArray
+	add $s0, $s7, $0 #resets user input
+#AddElement method
+	jal addElement
+	add $s0, $s7, $0 #resets user input
+	li $v0 10 #Close program
+	syscall
+##########################################################################
+error:
+	li $v0, 4
+	la $a0, str2 #Error
+	syscall
+	j input
+##########################################################################
+fillArray:
+
+userInput:	
+	beq $s0, $0, done #iterate until user input is 0
+	li $v0, 5 	  #Read user input
+	syscall		  
+	sw $v0, 0($s4)	  #Store element into array
+	addi $s4,$s4,4	  #Increment array position by 1 word, 4 bytes
+	addi $s0,$s0,-1	  #Decrement user counter
+	j userInput	  #Return to beq
+done:
+	la $s4, arr1 	  #Resets array pointer
+	jr $ra		  #Returns to main
+##########################################################################
+addElement:
+
+	addi $t0, $0,0 #sum of elements
+userInput2:
+	beq $s0, $0, done2 #Iterate until user input is 0
+	lw $t1, 0($s4)	   #Take element out of array and place into t1
+	add $t0, $t0, $t1  #Add element to sum of all elements
+	addi $s4, $s4, 4   #Push array pointer down one 
+	addi $s0, $s0, -1  #Decrement user input
+	j userInput2
+done2:
+	li $v0, 4
+	la $a0 , str3 	  #The sum of all the elements in the array is: 
+	syscall
+	
+	li $v0,1	 #Prepare to print an int
+	add $a0,$0,$t0	 #Print out the sum
+	syscall
+
+	la $s4, arr1	   #Resets array pointer
+	jr $ra		   #Returns to main
